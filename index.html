@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLNTIERS — Minecraft PvP Rankings</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="assets/favicon-64.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #121018;
+    --bg-elevated: #1B1826;
+    --bg-card: #201C2D;
+    --border: #2A2438;
+    --gold: #E8B44D;
+    --gold-dim: #B98E38;
+    --teal: #4FD1C5;
+    --text: #EDE6D6;
+    --text-dim: #A79FB0;
+    --text-faint: #6E6680;
+
+    --t1h: #F2C94C; --t1l: #D9A544;
+    --t2h: #4FD1C5; --t2l: #3BA89E;
+    --t3h: #7C93C9; --t3l: #5F7399;
+    --t4h: #9483AC; --t4l: #6C5F80;
+    --t5h: #7A7389; --t5l: #4A4556;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0;
+    background: radial-gradient(1200px 600px at 50% -10%, #1D1A29 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,h2,h3, .display{
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  .mono{ font-family: 'JetBrains Mono', monospace; }
+  a{ color: inherit; }
+
+  /* ---------- NAV ---------- */
+  header.nav{
+    position: sticky; top:0; z-index: 50;
+    display:flex; align-items:center; justify-content:space-between;
+    gap: 16px;
+    padding: 14px 28px;
+    background: rgba(18,16,24,0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Rajdhani',sans-serif; font-weight:700; font-size:20px;
+    letter-spacing: 0.04em;
+  }
+  .brand .mark{
+    width: 30px; height:30px; border-radius:50%;
+    display:inline-block;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    box-shadow: 0 0 14px rgba(232,180,77,0.25);
+  }
+  .brand small{ color: var(--text-faint); font-family:'Inter',sans-serif; font-weight:500; font-size: 12px; }
+
+  .search-box{
+    display:flex; align-items:center; gap:8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    min-width: 220px;
+  }
+  .search-box input{
+    background: none; border: none; outline:none;
+    color: var(--text); font-family:'Inter',sans-serif; font-size: 13px;
+    width: 100%;
+  }
+  .search-box input::placeholder{ color: var(--text-faint); }
+  .search-box svg{ flex-shrink:0; opacity:0.6; }
+
+  @media (max-width: 720px){
+    header.nav{ flex-wrap: wrap; }
+    .search-box{ order:3; width:100%; }
+  }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    max-width: 1080px; margin: 0 auto;
+    padding: 56px 28px 24px;
+    text-align:center;
+  }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'JetBrains Mono', monospace; font-size:11px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--teal);
+    border: 1px solid rgba(79,209,197,0.3);
+    background: rgba(79,209,197,0.08);
+    padding: 5px 12px; border-radius: 999px;
+    margin-bottom: 18px;
+  }
+  .hero h1{
+    font-size: clamp(34px, 6vw, 54px);
+    margin: 0 0 12px;
+    line-height: 1.05;
+  }
+  .hero h1 span{ color: var(--gold); }
+  .hero p{
+    color: var(--text-dim);
+    font-size: 15px;
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ---------- GAMEMODE TABS ---------- */
+  .tabs{
+    display:flex; gap:6px; flex-wrap:wrap;
+    justify-content:center;
+    max-width: 900px; margin: 30px auto 0;
+    padding: 0 28px;
+  }
+  .tab{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12px; letter-spacing: 0.04em;
+    padding: 8px 14px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .tab:hover{ border-color: var(--teal); color: var(--text); }
+  .tab.active{
+    background: linear-gradient(135deg, rgba(232,180,77,0.18), rgba(79,209,197,0.1));
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  /* ---------- PODIUM ---------- */
+  .podium{
+    max-width: 860px; margin: 44px auto 0;
+    padding: 0 28px;
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: end;
+    gap: 14px;
+  }
+  .podium-card{
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 14px 18px;
+    text-align:center;
+    position: relative;
+    transition: transform 0.2s ease;
+  }
+  .podium-card:hover{ transform: translateY(-4px); }
+  .podium-card.p1{ order:2; padding-top: 30px; border-color: rgba(232,180,77,0.5); box-shadow: 0 0 30px rgba(232,180,77,0.12); }
+  .podium-card.p2{ order:1; }
+  .podium-card.p3{ order:3; }
+  .podium-rank{
+    font-family:'Rajdhani',sans-serif; font-weight:700;
+    font-size: 13px; color: var(--text-faint);
+    margin-bottom: 8px;
+  }
+  .p1 .podium-rank{ color: var(--gold); font-size:15px; }
+  .podium-card img.avatar{
+    width: 52px; height:52px; border-radius: 9px;
+    image-rendering: pixelated;
+    border: 1px solid var(--border);
+  }
+  .p1 img.avatar{ width: 66px; height:66px; }
+  .podium-name{ font-family:'Rajdhani',sans-serif; font-weight:600; font-size:16px; margin-top:10px; }
+  .podium-points{ font-family:'JetBrains Mono',monospace; font-size:12px; color: var(--text-dim); margin-top:4px; }
+
+  /* ---------- FILTER BAR ---------- */
+  .filter-bar{
+    max-width: 980px; margin: 52px auto 0;
+    padding: 0 28px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap: 12px; flex-wrap: wrap;
+  }
+  .filter-bar h2{ font-size: 20px; margin:0; }
+  .filter-controls{ display:flex; gap:8px; align-items:center; }
+  select{
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 7px 10px;
+    border-radius: 7px;
+    outline:none;
+  }
+
+  /* ---------- TABLE ---------- */
+  .table-wrap{
+    max-width: 980px; margin: 18px auto 80px;
+    padding: 0 28px;
+  }
+  table{ width:100%; border-collapse: collapse; }
+  thead th{
+    text-align:left;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-faint);
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  thead th.num, tbody td.num{ text-align:right; }
+  tbody tr{
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.12s ease;
+  }
+  tbody tr:hover{ background: rgba(255,255,255,0.02); }
+  tbody td{ padding: 11px 12px; font-size: 14px; vertical-align: middle; }
+  td.rank{ font-family:'JetBrains Mono',monospace; color: var(--text-faint); width: 40px; }
+  .player-cell{ display:flex; align-items:center; gap:10px; }
+  .player-cell img{ width:26px; height:26px; border-radius:5px; image-rendering: pixelated; }
+  .player-cell .pname{ font-weight: 600; font-size: 14px; }
+  .region-tag{ font-family:'JetBrains Mono',monospace; font-size:11px; color: var(--text-faint); }
+  td.points{ font-family:'JetBrains Mono',monospace; color: var(--text-dim); }
+
+  .tier-badge{
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:'JetBrains Mono',monospace; font-size: 11px; font-weight:700;
+    padding: 4px 9px 4px 8px;
+    border-radius: 4px 8px 4px 8px;
+    position: relative; overflow:hidden;
+    letter-spacing: 0.03em;
+  }
+  .tier-badge::after{
+    content:''; position:absolute; inset:0;
+    background: linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.35) 50%, transparent 60%);
+    transform: translateX(-120%);
+  }
+  .tier-badge.glint:hover::after{ transform: translateX(120%); transition: transform 0.6s ease; }
+  .tb-1h{ background: rgba(242,201,76,0.16); color: var(--t1h); border:1px solid rgba(242,201,76,0.4); }
+  .tb-1l{ background: rgba(217,165,68,0.14); color: var(--t1l); border:1px solid rgba(217,165,68,0.35); }
+  .tb-2h{ background: rgba(79,209,197,0.14); color: var(--t2h); border:1px solid rgba(79,209,197,0.35); }
+  .tb-2l{ background: rgba(59,168,158,0.13); color: var(--t2l); border:1px solid rgba(59,168,158,0.3); }
+  .tb-3h{ background: rgba(124,147,201,0.14); color: var(--t3h); border:1px solid rgba(124,147,201,0.3); }
+  .tb-3l{ background: rgba(95,115,153,0.13); color: var(--t3l); border:1px solid rgba(95,115,153,0.28); }
+  .tb-4h{ background: rgba(148,131,172,0.14); color: var(--t4h); border:1px solid rgba(148,131,172,0.28); }
+  .tb-4l{ background: rgba(108,95,128,0.14); color: var(--t4l); border:1px solid rgba(108,95,128,0.26); }
+  .tb-5h{ background: rgba(122,115,137,0.14); color: var(--t5h); border:1px solid rgba(122,115,137,0.25); }
+  .tb-5l{ background: rgba(74,69,86,0.16); color: var(--t5l); border:1px solid rgba(74,69,86,0.3); }
+
+  .empty-state{
+    text-align:center; padding: 50px 20px; color: var(--text-faint);
+    font-family:'JetBrains Mono', monospace; font-size: 13px;
+  }
+
+  footer{
+    border-top: 1px solid var(--border);
+    padding: 22px 28px;
+    text-align:center;
+    color: var(--text-faint);
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+
+  @media (max-width: 640px){
+    .podium{ grid-template-columns: 1fr; }
+    .podium-card{ order: initial !important; }
+    thead th:nth-child(3), tbody td:nth-child(3){ display:none; } /* hide region on mobile */
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="brand">
+    <img class="mark" src="assets/logo.png" alt="PLNTIERS logo">
+    PLNTIERS <small>MINECRAFT PvP RANKINGS</small>
+  </div>
+  <div class="search-box">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="searchInput" type="text" placeholder="プレイヤーを検索...">
+  </div>
+</header>
+
+<section class="hero">
+  <span class="eyebrow">SEASON 4 · LIVE RANKINGS</span>
+  <h1>Minecraftトップ<span>PvP</span>プレイヤー</h1>
+  <p>コミュニティによるティアテストで実力を証明したプレイヤーたちのランキング。ゲームモードを選んで順位を確認しよう。</p>
+</section>
+
+<nav class="tabs" id="tabs"></nav>
+
+<div class="podium" id="podium"></div>
+
+<div class="filter-bar">
+  <h2 id="tableTitle">Overall Rankings</h2>
+  <div class="filter-controls">
+    <select id="regionFilter">
+      <option value="ALL">全リージョン</option>
+      <option value="NA">NA</option>
+      <option value="EU">EU</option>
+      <option value="AS">AS</option>
+      <option value="OCE">OCE</option>
+      <option value="SA">SA</option>
+    </select>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>プレイヤー</th>
+        <th>地域</th>
+        <th>ティア</th>
+        <th class="num">ポイント</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+  <div class="empty-state" id="emptyState" style="display:none;">一致するプレイヤーが見つかりません</div>
+</div>
+
+<footer>
+  PLNTIERS — Community-run Minecraft PvP tier list · Not affiliated with Mojang
+</footer>
+
+<script>
+/* ---------------- DATA ---------------- */
+const GAMEMODES = [
+  { id: 'overall',        label: 'OVERALL' },
+  { id: 'vanilla',        label: 'VANILLA' },
+  { id: 'uhc',             label: 'UHC' },
+  { id: 'pot',             label: 'POT' },
+  { id: 'nethop',          label: 'NETHOP' },
+  { id: 'smp',             label: 'SMP' },
+  { id: 'sword',           label: 'SWORD' },
+  { id: 'axe',             label: 'AXE' },
+  { id: 'mace',            label: 'MACE' },
+  { id: 'diamondsmp',      label: 'DIAMOND SMP' },
+  { id: 'cart',            label: 'CART' },
+  { id: 'bow',             label: 'BOW' },
+  { id: 'debuff',          label: 'DEBUFF' },
+  { id: 'bed',             label: 'BED' },
+  { id: 'speed',           label: 'SPEED' },
+  { id: 'manhunt',         label: 'MANHUNT' },
+  { id: 'ogvanilla',       label: 'OG VANILLA' },
+  { id: 'trident',         label: 'TRIDENT' },
+  { id: 'elytra',          label: 'ELYTRA' },
+  { id: 'diamondvanilla',  label: 'DIAMOND VANILLA' },
+  { id: 'creeper',         label: 'CREEPER' },
+  { id: 'speedvanilla',    label: 'SPEED VANILLA' },
+];
+
+const TIERS = ['1H','1L','2H','2L','3H','3L','4H','4L','5H','5L'];
+const TIER_POINTS = {'1H':60,'1L':45,'2H':32,'2L':24,'3H':17,'3L':12,'4H':8,'4L':5,'5H':3,'5L':1};
+const REGIONS = ['NA','EU','AS','OCE','SA'];
+
+const NAMES = [
+  'ZephyrCrit','ObsidianFang','NovaKnuckle','GraveShift','PixelReaper',
+  'EchoBlade','FrostBolt','RavenClutch','QuartzDrift','MythicSlash',
+  'CinderHawk','VoidLurker','ThornSpike','GlacierEdge','EmberWraith',
+  'DuskRunner','SolarFlint','HollowAxe','TundraSprint','CrimsonNode',
+  'AshVortex','LunarPry','StormAnvil','WardenPulse','NetherEcho',
+  'GildedTusk','BlazeCourier','SilverbackPvP','CopperSnipe','TidalHex',
+];
+
+/*
+  ▼▼▼ 実際のプレイヤーデータに差し替える場合はここを編集 ▼▼▼
+  現在は下の「players = NAMES.map(...)」でダミーデータを自動生成しています。
+  実データにするには、この生成処理を削除して、直接以下のような配列を書いてください:
+
+  const players = [
+    {
+      name: "PlayerName",
+      region: "NA", // NA / EU / AS / OCE / SA
+      avatar: "https://mc-heads.net/avatar/PlayerName/32",
+      gm: {
+        vanilla: "1H", uhc: "2L", pot: null, nethop: "3H", smp: null,
+        sword: "1L", axe: null, mace: null, diamondsmp: null, cart: null,
+        bow: null, debuff: null, bed: null, speed: null, manhunt: null,
+        ogvanilla: null, trident: null, elytra: null, diamondvanilla: null,
+        creeper: null, speedvanilla: null
+      },
+    },
+    // ...他のプレイヤーもここに追加
+  ];
+
+  ティア表記: "1H"(Tier1 High) 〜 "5L"(Tier5 Low)、未ランクは null
+  overallPoints は自動計算されるので手入力不要です（下の allPlayers() 参照）
+*/
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function seededTier(bias){
+  // bias 0-1, higher = better tiers more likely
+  const r = Math.random() * Math.random(); // skew toward 0 (better)
+  const idx = Math.floor(r * (1-bias) * TIERS.length);
+  return TIERS[Math.min(idx, TIERS.length-1)];
+}
+
+let players = NAMES.map((name, i) => {
+  const bias = Math.random()*0.5; // each player has own skill bias
+  const gm = {};
+  GAMEMODES.filter(g=>g.id!=='overall').forEach(g=>{
+    gm[g.id] = Math.random() < 0.75 ? seededTier(bias) : null; // some unranked in some modes
+  });
+  return {
+    id: i,
+    name,
+    region: pick(REGIONS),
+    avatar: `https://mc-heads.net/avatar/${encodeURIComponent(name)}/32`,
+    gm,
+  };
+});
+
+// overallPoints is always derived automatically from gm tiers — no need to set it by hand,
+// even if you paste in a static real-data array above.
+players = players.map(p => ({
+  ...p,
+  overallPoints: Object.values(p.gm).filter(Boolean).reduce((s,t)=>s+(TIER_POINTS[t]||0),0),
+}));
+
+function tierClass(t){ return 'tb-' + t.toLowerCase(); }
+function tierLabel(t){ return t; }
+
+/* ---------------- STATE ---------------- */
+let state = { mode: 'overall', region: 'ALL', query: '' };
+
+/* ---------------- RENDER TABS ---------------- */
+const tabsEl = document.getElementById('tabs');
+GAMEMODES.forEach(g=>{
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (g.id===state.mode ? ' active' : '');
+  btn.textContent = g.label;
+  btn.dataset.mode = g.id;
+  btn.addEventListener('click', ()=>{ state.mode = g.id; render(); });
+  tabsEl.appendChild(btn);
+});
+
+document.getElementById('regionFilter').addEventListener('change', e=>{
+  state.region = e.target.value; render();
+});
+document.getElementById('searchInput').addEventListener('input', e=>{
+  state.query = e.target.value.trim().toLowerCase(); render();
+});
+
+/* ---------------- RANK LOGIC ---------------- */
+function getRanked(){
+  let list = players.map(p=>{
+    let points, tier;
+    if(state.mode === 'overall'){
+      points = p.overallPoints;
+      tier = null;
+    } else {
+      tier = p.gm[state.mode];
+      points = tier ? TIER_POINTS[tier] : 0;
+    }
+    return { ...p, points, tier };
+  });
+
+  if(state.mode !== 'overall'){
+    list = list.filter(p => p.tier !== null);
+  }
+  if(state.region !== 'ALL'){
+    list = list.filter(p => p.region === state.region);
+  }
+  if(state.query){
+    list = list.filter(p => p.name.toLowerCase().includes(state.query));
+  }
+  list.sort((a,b)=> b.points - a.points);
+  return list;
+}
+
+function bestOverallTier(p){
+  // pick the highest tier among gamemodes to show as a representative badge in overall view
+  let best = null, bestScore = -1;
+  Object.values(p.gm).forEach(t=>{
+    if(t && TIER_POINTS[t] > bestScore){ bestScore = TIER_POINTS[t]; best = t; }
+  });
+  return best;
+}
+
+/* ---------------- RENDER ---------------- */
+function render(){
+  document.querySelectorAll('.tab').forEach(b=>{
+    b.classList.toggle('active', b.dataset.mode === state.mode);
+  });
+  const modeLabel = GAMEMODES.find(g=>g.id===state.mode).label;
+  document.getElementById('tableTitle').textContent = modeLabel.charAt(0) + modeLabel.slice(1).toLowerCase() + ' Rankings';
+
+  const ranked = getRanked();
+
+  // Podium (top 3) — only meaningful without a search query
+  const podiumEl = document.getElementById('podium');
+  podiumEl.innerHTML = '';
+  if(!state.query && ranked.length >= 3){
+    const top3 = ranked.slice(0,3);
+    const order = [1,0,2]; // visually 2nd, 1st, 3rd
+    order.forEach(i=>{
+      const p = top3[i];
+      const div = document.createElement('div');
+      div.className = 'podium-card p' + (i+1);
+      div.innerHTML = `
+        <div class="podium-rank">#${i+1}</div>
+        <img class="avatar" src="${p.avatar}" alt="${p.name}">
+        <div class="podium-name">${p.name}</div>
+        <div class="podium-points">${p.points} pts</div>
+      `;
+      podiumEl.appendChild(div);
+    });
+    podiumEl.style.display = 'grid';
+  } else {
+    podiumEl.style.display = 'none';
+  }
+
+  // Table
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  const emptyState = document.getElementById('emptyState');
+
+  if(ranked.length === 0){
+    emptyState.style.display = 'block';
+  } else {
+    emptyState.style.display = 'none';
+    ranked.forEach((p, idx)=>{
+      const tier = state.mode === 'overall' ? bestOverallTier(p) : p.tier;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="rank">${idx+1}</td>
+        <td>
+          <div class="player-cell">
+            <img src="${p.avatar}" alt="${p.name}">
+            <span class="pname">${p.name}</span>
+          </div>
+        </td>
+        <td class="region-tag">${p.region}</td>
+        <td>${tier ? `<span class="tier-badge glint ${tierClass(tier)}">${tierLabel(tier)}</span>` : '<span class="region-tag">—</span>'}</td>
+        <td class="num points">${p.points}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+}
+
+render();
+</script>
+</body>
+</html>
