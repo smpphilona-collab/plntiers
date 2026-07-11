@@ -244,16 +244,16 @@
     transform: translateX(-120%);
   }
   .tier-badge.glint:hover::after{ transform: translateX(120%); transition: transform 0.6s ease; }
-  .tb-1h{ background: rgba(242,201,76,0.16); color: var(--t1h); border:1px solid rgba(242,201,76,0.4); }
-  .tb-1l{ background: rgba(217,165,68,0.14); color: var(--t1l); border:1px solid rgba(217,165,68,0.35); }
-  .tb-2h{ background: rgba(79,209,197,0.14); color: var(--t2h); border:1px solid rgba(79,209,197,0.35); }
-  .tb-2l{ background: rgba(59,168,158,0.13); color: var(--t2l); border:1px solid rgba(59,168,158,0.3); }
-  .tb-3h{ background: rgba(124,147,201,0.14); color: var(--t3h); border:1px solid rgba(124,147,201,0.3); }
-  .tb-3l{ background: rgba(95,115,153,0.13); color: var(--t3l); border:1px solid rgba(95,115,153,0.28); }
-  .tb-4h{ background: rgba(148,131,172,0.14); color: var(--t4h); border:1px solid rgba(148,131,172,0.28); }
-  .tb-4l{ background: rgba(108,95,128,0.14); color: var(--t4l); border:1px solid rgba(108,95,128,0.26); }
-  .tb-5h{ background: rgba(122,115,137,0.14); color: var(--t5h); border:1px solid rgba(122,115,137,0.25); }
-  .tb-5l{ background: rgba(74,69,86,0.16); color: var(--t5l); border:1px solid rgba(74,69,86,0.3); }
+  .tb-ht1{ background: rgba(242,201,76,0.16); color: var(--t1h); border:1px solid rgba(242,201,76,0.4); }
+  .tb-lt1{ background: rgba(217,165,68,0.14); color: var(--t1l); border:1px solid rgba(217,165,68,0.35); }
+  .tb-ht2{ background: rgba(79,209,197,0.14); color: var(--t2h); border:1px solid rgba(79,209,197,0.35); }
+  .tb-lt2{ background: rgba(59,168,158,0.13); color: var(--t2l); border:1px solid rgba(59,168,158,0.3); }
+  .tb-ht3{ background: rgba(124,147,201,0.14); color: var(--t3h); border:1px solid rgba(124,147,201,0.3); }
+  .tb-lt3{ background: rgba(95,115,153,0.13); color: var(--t3l); border:1px solid rgba(95,115,153,0.28); }
+  .tb-ht4{ background: rgba(148,131,172,0.14); color: var(--t4h); border:1px solid rgba(148,131,172,0.28); }
+  .tb-lt4{ background: rgba(108,95,128,0.14); color: var(--t4l); border:1px solid rgba(108,95,128,0.26); }
+  .tb-ht5{ background: rgba(122,115,137,0.14); color: var(--t5h); border:1px solid rgba(122,115,137,0.25); }
+  .tb-lt5{ background: rgba(74,69,86,0.16); color: var(--t5l); border:1px solid rgba(74,69,86,0.3); }
 
   .empty-state{
     text-align:center; padding: 50px 20px; color: var(--text-faint);
@@ -269,10 +269,109 @@
     font-size: 11px;
   }
 
+  /* ---------------- PLAYER MODAL ---------------- */
+  .modal-overlay{
+    position: fixed; inset:0; z-index: 100;
+    background: rgba(8,7,12,0.7);
+    backdrop-filter: blur(4px);
+    display:none;
+    align-items:center; justify-content:center;
+    padding: 20px;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal-card{
+    width: 100%; max-width: 420px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 28px 26px;
+    position: relative;
+    text-align:center;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  .modal-close{
+    position:absolute; top:14px; right:14px;
+    width: 30px; height:30px; border-radius:50%;
+    background: rgba(255,255,255,0.06);
+    border: none; color: var(--text-dim);
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    font-size: 16px;
+    transition: background 0.15s ease;
+  }
+  .modal-close:hover{ background: rgba(255,255,255,0.12); color: var(--text); }
+  .modal-avatar{
+    width: 92px; height:92px; border-radius:50%;
+    image-rendering: pixelated;
+    border: 2px solid var(--gold);
+    padding: 3px;
+    margin-bottom: 14px;
+  }
+  .modal-name{ font-size: 24px; margin: 0 0 6px; }
+  .modal-region{ color: var(--text-dim); font-size: 13px; margin-bottom: 22px; }
+
+  .modal-section-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-faint);
+    text-align:left;
+    margin: 0 0 8px;
+  }
+  .modal-position{
+    display:flex; align-items:stretch;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    overflow:hidden;
+    margin-bottom: 24px;
+  }
+  .modal-position .rank-num{
+    background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+    color: #1a1408;
+    font-family:'Rajdhani',sans-serif; font-weight:700; font-size:18px;
+    display:flex; align-items:center; justify-content:center;
+    width: 48px; flex-shrink:0;
+  }
+  .modal-position .pos-detail{
+    flex:1;
+    display:flex; align-items:center; gap:8px;
+    padding: 0 14px;
+    font-size: 14px;
+    text-align:left;
+  }
+  .modal-position .pos-detail b{ font-family:'Rajdhani',sans-serif; letter-spacing:0.03em; }
+  .modal-position .pos-points{ margin-left:auto; color: var(--text-dim); font-family:'JetBrains Mono',monospace; font-size:12px; }
+
+  .modal-tiers{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .tier-chip{
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 4px 8px;
+  }
+  .tier-chip .gm-icon{
+    width: 26px; height:26px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700;
+    background: rgba(255,255,255,0.06);
+    color: var(--text-dim);
+  }
+  .tier-chip .gm-label{
+    font-family:'JetBrains Mono',monospace; font-size: 9px;
+    color: var(--text-faint); letter-spacing:0.03em;
+  }
+  tbody tr{ cursor: pointer; }
+  .podium-card{ cursor: pointer; }
+
   @media (max-width: 640px){
     .podium{ grid-template-columns: 1fr; }
     .podium-card{ order: initial !important; }
     thead th:nth-child(3), tbody td:nth-child(3){ display:none; } /* hide region on mobile */
+    .modal-tiers{ grid-template-columns: repeat(3, 1fr); }
   }
 </style>
 </head>
@@ -333,6 +432,27 @@
   PLNTIERS — Community-run Minecraft PvP tier list · Not affiliated with Mojang
 </footer>
 
+<div class="modal-overlay" id="playerModal">
+  <div class="modal-card">
+    <button class="modal-close" id="modalClose">✕</button>
+    <img class="modal-avatar" id="modalAvatar" src="" alt="">
+    <h3 class="modal-name" id="modalName"></h3>
+    <div class="modal-region" id="modalRegion"></div>
+
+    <div class="modal-section-label">POSITION</div>
+    <div class="modal-position">
+      <div class="rank-num" id="modalRank"></div>
+      <div class="pos-detail">
+        <span id="modalModeLabel"></span>
+        <span class="pos-points" id="modalPoints"></span>
+      </div>
+    </div>
+
+    <div class="modal-section-label">TIERS</div>
+    <div class="modal-tiers" id="modalTiers"></div>
+  </div>
+</div>
+
 <script>
 /* ---------------- DATA ---------------- */
 const GAMEMODES = [
@@ -360,65 +480,68 @@ const GAMEMODES = [
   { id: 'speedvanilla',    label: 'SPEED VANILLA' },
 ];
 
-const TIERS = ['1H','1L','2H','2L','3H','3L','4H','4L','5H','5L'];
-const TIER_POINTS = {'1H':60,'1L':45,'2H':32,'2L':24,'3H':17,'3L':12,'4H':8,'4L':5,'5H':3,'5L':1};
+const TIERS = ['HT1','LT1','HT2','LT2','HT3','LT3','HT4','LT4','HT5','LT5'];
+const TIER_POINTS = {'HT1':60,'LT1':50,'HT2':40,'LT2':32,'HT3':24,'LT3':18,'HT4':12,'LT4':8,'HT5':4,'LT5':1};
 const REGIONS = ['NA','EU','AS','OCE','SA'];
 
-const NAMES = [
-  'ZephyrCrit','ObsidianFang','NovaKnuckle','GraveShift','PixelReaper',
-  'EchoBlade','FrostBolt','RavenClutch','QuartzDrift','MythicSlash',
-  'CinderHawk','VoidLurker','ThornSpike','GlacierEdge','EmberWraith',
-  'DuskRunner','SolarFlint','HollowAxe','TundraSprint','CrimsonNode',
-  'AshVortex','LunarPry','StormAnvil','WardenPulse','NetherEcho',
-  'GildedTusk','BlazeCourier','SilverbackPvP','CopperSnipe','TidalHex',
-];
+/* =====================================================================
+   ▼▼▼ プレイヤーデータはここを編集してください ▼▼▼
 
-/*
-  ▼▼▼ 実際のプレイヤーデータに差し替える場合はここを編集 ▼▼▼
-  現在は下の「players = NAMES.map(...)」でダミーデータを自動生成しています。
-  実データにするには、この生成処理を削除して、直接以下のような配列を書いてください:
+   1人分は下の形です。コピーして増やしてください。
 
-  const players = [
-    {
-      name: "PlayerName",
-      region: "NA", // NA / EU / AS / OCE / SA
-      avatar: "https://mc-heads.net/avatar/PlayerName/32",
-      gm: {
-        vanilla: "1H", uhc: "2L", pot: null, nethop: "3H", smp: null,
-        sword: "1L", axe: null, mace: null, diamondsmp: null, cart: null,
-        bow: null, debuff: null, bed: null, speed: null, manhunt: null,
-        ogvanilla: null, trident: null, elytra: null, diamondvanilla: null,
-        creeper: null, speedvanilla: null
-      },
+   {
+     name: "プレイヤー名",   // Minecraftのユーザー名（アバターにも使われます）
+     region: "NA",           // NA / EU / AS / OCE / SA
+     gm: {
+       // 各モードのティア: "HT1","LT1","HT2","LT2","HT3","LT3","HT4","LT4","HT5","LT5"
+       //   数字が小さいほど上位。HT(High Tier)はその数字の中で上、LT(Low Tier)は下。
+       //   例: HT1 > LT1 > HT2 > LT2 > HT3 > LT3 > HT4 > LT4 > HT5 > LT5
+       // 未テスト/未ランクは null のまま。
+       vanilla: null, uhc: null, pot: null, nethop: null, smp: null,
+       sword: null, axe: null, mace: null, diamondsmp: null, cart: null,
+       bow: null, debuff: null, bed: null, speed: null, manhunt: null,
+       ogvanilla: null, trident: null, elytra: null, diamondvanilla: null,
+       creeper: null, speedvanilla: null,
+     },
+   },
+
+   総合(overall)のポイント・順位は自動計算されるので手入力不要です。
+   アバターは https://mc-heads.net/avatar/ユーザー名 から自動取得されます。
+   下の2人は記入例です。削除して実際のメンバーに置き換えてください。
+===================================================================== */
+const PLAYERS = [
+  {
+    name: "PhilonaXD",
+    region: "AS",
+    gm: {
+      vanilla: "HT1", uhc: "LT2", pot: "LT1", nethop: null, smp: "HT2",
+      sword: "HT1", axe: null, mace: null, diamondsmp: null, cart: null,
+      bow: "HT3", debuff: null, bed: null, speed: null, manhunt: null,
+      ogvanilla: null, trident: null, elytra: null, diamondvanilla: null,
+      creeper: null, speedvanilla: null,
     },
-    // ...他のプレイヤーもここに追加
-  ];
+  },
+  {
+    name: "ExampleTester",
+    region: "NA",
+    gm: {
+      vanilla: "LT3", uhc: null, pot: "HT2", nethop: "HT3", smp: null,
+      sword: null, axe: "HT4", mace: null, diamondsmp: null, cart: null,
+      bow: null, debuff: null, bed: null, speed: null, manhunt: null,
+      ogvanilla: null, trident: null, elytra: null, diamondvanilla: null,
+      creeper: null, speedvanilla: null,
+    },
+  },
+];
+/* ▲▲▲ プレイヤーデータはここまで ▲▲▲ ===================================== */
 
-  ティア表記: "1H"(Tier1 High) 〜 "5L"(Tier5 Low)、未ランクは null
-  overallPoints は自動計算されるので手入力不要です（下の allPlayers() 参照）
-*/
-function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-function seededTier(bias){
-  // bias 0-1, higher = better tiers more likely
-  const r = Math.random() * Math.random(); // skew toward 0 (better)
-  const idx = Math.floor(r * (1-bias) * TIERS.length);
-  return TIERS[Math.min(idx, TIERS.length-1)];
-}
-
-let players = NAMES.map((name, i) => {
-  const bias = Math.random()*0.5; // each player has own skill bias
-  const gm = {};
-  GAMEMODES.filter(g=>g.id!=='overall').forEach(g=>{
-    gm[g.id] = Math.random() < 0.75 ? seededTier(bias) : null; // some unranked in some modes
-  });
-  return {
-    id: i,
-    name,
-    region: pick(REGIONS),
-    avatar: `https://mc-heads.net/avatar/${encodeURIComponent(name)}/32`,
-    gm,
-  };
-});
+let players = PLAYERS.map((p, i) => ({
+  id: i,
+  name: p.name,
+  region: p.region,
+  avatar: `https://mc-heads.net/avatar/${encodeURIComponent(p.name)}/32`,
+  gm: p.gm,
+}));
 
 // overallPoints is always derived automatically from gm tiers — no need to set it by hand,
 // even if you paste in a static real-data array above.
@@ -514,6 +637,7 @@ function render(){
         <div class="podium-points">${p.points} pts</div>
       `;
       podiumEl.appendChild(div);
+      div.addEventListener('click', ()=> openPlayerModal(p.id, i+1, state.mode, p.points));
     });
     podiumEl.style.display = 'grid';
   } else {
@@ -545,9 +669,60 @@ function render(){
         <td class="num points">${p.points}</td>
       `;
       tbody.appendChild(tr);
+      tr.addEventListener('click', ()=> openPlayerModal(p.id, idx+1, state.mode, p.points));
     });
   }
 }
+
+/* ---------------- PLAYER MODAL ---------------- */
+const REGION_NAMES = { NA:'North America', EU:'Europe', AS:'Asia', OCE:'Oceania', SA:'South America' };
+
+function openPlayerModal(playerId, rankPos, modeId, points){
+  const p = players.find(pl => pl.id === playerId);
+  if(!p) return;
+
+  document.getElementById('modalAvatar').src = p.avatar;
+  document.getElementById('modalName').textContent = p.name;
+  document.getElementById('modalRegion').textContent = REGION_NAMES[p.region] || p.region;
+  document.getElementById('modalRank').textContent = rankPos;
+
+  const modeLabel = GAMEMODES.find(g=>g.id===modeId).label;
+  document.getElementById('modalModeLabel').innerHTML = `<b>${modeLabel}</b>`;
+  document.getElementById('modalPoints').textContent = `${points} points`;
+
+  const tiersEl = document.getElementById('modalTiers');
+  tiersEl.innerHTML = '';
+  const rankedModes = GAMEMODES.filter(g => g.id !== 'overall' && p.gm[g.id]);
+  if(rankedModes.length === 0){
+    tiersEl.innerHTML = '<div class="modal-region" style="grid-column:1/-1;">まだどのモードもランクされていません</div>';
+  } else {
+    rankedModes.forEach(g=>{
+      const t = p.gm[g.id];
+      const chip = document.createElement('div');
+      chip.className = 'tier-chip';
+      chip.innerHTML = `
+        <div class="gm-icon">${g.label.slice(0,2)}</div>
+        <div class="gm-label">${g.label}</div>
+        <span class="tier-badge glint ${tierClass(t)}">${t}</span>
+      `;
+      tiersEl.appendChild(chip);
+    });
+  }
+
+  document.getElementById('playerModal').classList.add('open');
+}
+
+function closePlayerModal(){
+  document.getElementById('playerModal').classList.remove('open');
+}
+
+document.getElementById('modalClose').addEventListener('click', closePlayerModal);
+document.getElementById('playerModal').addEventListener('click', e=>{
+  if(e.target.id === 'playerModal') closePlayerModal();
+});
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape') closePlayerModal();
+});
 
 render();
 </script>
