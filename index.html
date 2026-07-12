@@ -69,6 +69,21 @@
   }
   .brand small{ color: var(--text-faint); font-family:'Inter',sans-serif; font-weight:500; font-size: 12px; }
 
+  .nav-right{ display:flex; align-items:center; gap: 12px; }
+
+  .discord-btn{
+    display:flex; align-items:center; gap:7px;
+    font-family:'Inter',sans-serif; font-weight:600; font-size: 13px;
+    color: #1a1408;
+    background: linear-gradient(135deg, var(--teal), #3bb0a5);
+    padding: 8px 14px;
+    border-radius: 8px;
+    text-decoration:none;
+    white-space: nowrap;
+    transition: filter 0.15s ease, transform 0.15s ease;
+  }
+  .discord-btn:hover{ filter: brightness(1.08); transform: translateY(-1px); }
+
   .search-box{
     display:flex; align-items:center; gap:8px;
     background: var(--bg-card);
@@ -87,7 +102,9 @@
 
   @media (max-width: 720px){
     header.nav{ flex-wrap: wrap; }
-    .search-box{ order:3; width:100%; }
+    .nav-right{ flex-wrap: wrap; width:100%; }
+    .search-box{ width:100%; order:3; }
+    .discord-btn{ order:2; }
   }
 
   /* ---------- HERO ---------- */
@@ -343,7 +360,7 @@
 
   .modal-tiers{
     display:grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 10px;
   }
   .tier-chip{
@@ -371,7 +388,7 @@
     .podium{ grid-template-columns: 1fr; }
     .podium-card{ order: initial !important; }
     thead th:nth-child(3), tbody td:nth-child(3){ display:none; } /* hide region on mobile */
-    .modal-tiers{ grid-template-columns: repeat(3, 1fr); }
+    .modal-tiers{ grid-template-columns: repeat(2, 1fr); }
   }
 </style>
 </head>
@@ -380,17 +397,23 @@
 <header class="nav">
   <div class="brand">
     <img class="mark" src="assets/logo.png" alt="PLNTIERS logo">
-    PLNTIERS <small>MINECRAFT PvP RANKINGS</small>
+    PLNTIERS <small>TOP RANKINGS</small>
   </div>
-  <div class="search-box">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input id="searchInput" type="text" placeholder="プレイヤーを検索...">
+  <div class="nav-right">
+    <a class="discord-btn" href="https://discord.gg/s8hqeY4R9q" target="_blank" rel="noopener noreferrer">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 12.5c0 .8-.6 1.5-1.4 1.5s-1.4-.7-1.4-1.5.6-1.5 1.4-1.5 1.4.7 1.4 1.5zm7 0c0 .8-.6 1.5-1.4 1.5s-1.4-.7-1.4-1.5.6-1.5 1.4-1.5 1.4.7 1.4 1.5z"/><path d="M17.5 5.5C16.2 4.9 14.8 4.5 13.3 4.3c-.2.3-.4.7-.5 1-1.5-.2-3-.2-4.5 0-.1-.3-.3-.7-.5-1C6.7 4.5 5.3 4.9 4 5.5 1.7 9 1 12.3 1.3 15.6c1.6 1.2 3.1 1.9 4.6 2.4.4-.5.7-1.1 1-1.7-.5-.2-1-.4-1.5-.7.1-.1.2-.2.4-.3 3 1.4 6.2 1.4 9.1 0 .1.1.2.2.4.3-.5.3-1 .5-1.5.7.3.6.6 1.2 1 1.7 1.5-.5 3-1.2 4.6-2.4.4-3.8-.5-7.1-2.4-10.1z"/></svg>
+      <span>Discord</span>
+    </a>
+    <div class="search-box">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="searchInput" type="text" placeholder="プレイヤーを検索...">
+    </div>
   </div>
 </header>
 
 <section class="hero">
   <span class="eyebrow">PLNTIERS RANKINGS</span>
-  <h1>PLNTIERS <span>MCPVP</span> TOP RANKINGS</h1>
+  <h1>PLNTIERS <span>TOP</span> RANKINGS</h1>
   <p>PLNTiersで受けたモードのリザルトを確認したり、いろんなプレイヤーのリザルトを見よう。</p>
 </section>
 
@@ -577,7 +600,7 @@ async function loadPlayersFromSheet(){
         region: region || '—',
         avatar: `https://mc-heads.net/avatar/${encodeURIComponent(name)}/32`,
         gm,
-        overallPoints: Object.values(gm).filter(Boolean).reduce((s,t)=>s+(TIER_POINTS[t]||0),0),
+        overallPoints: Object.values(gm).filter(Boolean).reduce((s,t)=>s+parseTierCode(t).points,0),
       };
     })
     .filter(Boolean);
@@ -587,8 +610,27 @@ async function loadPlayersFromSheet(){
   return list;
 }
 
-function tierClass(t){ return 'tb-' + t.toLowerCase(); }
-function tierLabel(t){ return t; }
+/* ---------------- TIER CODE PARSING ----------------
+   ゲームモード列には通常の "HT1"〜"LT5" のほか、頭にプレフィックスを
+   付けて以下のように入力できます:
+     "RHT1" → 引退時点のティア（Retired）: 表示は「Retired HT1」
+     "PHT1" → 歴代最高ティア（Peak）    : 表示は「Peak HT1」
+   ポイント計算には、プレフィックスの有無に関わらずベースのティア
+   （HT1など）の点数がそのまま使われます。
+------------------------------------------------------- */
+function parseTierCode(raw){
+  if(!raw) return { prefix:null, base:null, points:0, label:'' };
+  const m = /^([RP])?(HT[1-5]|LT[1-5])$/.exec(String(raw).toUpperCase());
+  if(!m) return { prefix:null, base:raw, points:(TIER_POINTS[raw]||0), label:raw };
+  const prefix = m[1] || null;
+  const base = m[2];
+  const points = TIER_POINTS[base] || 0;
+  const label = prefix === 'R' ? `Retired ${base}` : prefix === 'P' ? `Peak ${base}` : base;
+  return { prefix, base, points, label };
+}
+
+function tierClass(t){ return 'tb-' + parseTierCode(t).base.toLowerCase(); }
+function tierLabel(t){ return parseTierCode(t).label; }
 
 /* ---------------- STATE ---------------- */
 let state = { mode: 'overall', region: 'ALL', query: '' };
@@ -620,7 +662,7 @@ function getRanked(){
       tier = null;
     } else {
       tier = p.gm[state.mode];
-      points = tier ? TIER_POINTS[tier] : 0;
+      points = tier ? parseTierCode(tier).points : 0;
     }
     return { ...p, points, tier };
   });
@@ -642,7 +684,8 @@ function bestOverallTier(p){
   // pick the highest tier among gamemodes to show as a representative badge in overall view
   let best = null, bestScore = -1;
   Object.values(p.gm).forEach(t=>{
-    if(t && TIER_POINTS[t] > bestScore){ bestScore = TIER_POINTS[t]; best = t; }
+    const pts = parseTierCode(t).points;
+    if(t && pts > bestScore){ bestScore = pts; best = t; }
   });
   return best;
 }
@@ -731,7 +774,7 @@ function openPlayerModal(playerId, rankPos, modeId, points){
   tiersEl.innerHTML = '';
   const rankedModes = GAMEMODES.filter(g => g.id !== 'overall' && p.gm[g.id]);
   if(rankedModes.length === 0){
-    tiersEl.innerHTML = '<div class="modal-region" style="grid-column:1/-1;">ランクなし</div>';
+    tiersEl.innerHTML = '<div class="modal-region" style="grid-column:1/-1;">まだどのモードもランクされていません</div>';
   } else {
     rankedModes.forEach(g=>{
       const t = p.gm[g.id];
@@ -740,7 +783,7 @@ function openPlayerModal(playerId, rankPos, modeId, points){
       chip.innerHTML = `
         <div class="gm-icon">${g.label.slice(0,2)}</div>
         <div class="gm-label">${g.label}</div>
-        <span class="tier-badge glint ${tierClass(t)}">${t}</span>
+        <span class="tier-badge glint ${tierClass(t)}">${tierLabel(t)}</span>
       `;
       tiersEl.appendChild(chip);
     });
@@ -772,7 +815,7 @@ async function init(){
     console.log('[PLNTIERS] init: プレイヤーデータの取得に成功しました。件数 =', players.length);
   } catch(err){
     console.error('[PLNTIERS] init: プレイヤーデータの取得に失敗しました:', err);
-    emptyState.textContent = 'ランキングデータを読み込めませんでした。このモードのリザルトが1つも出ていません。';
+    emptyState.textContent = 'ランキングデータを読み込めませんでした。index.html 内の GAS_URL が正しく設定されているか、GASのデプロイで「アクセスできるユーザー」が「全員」になっているか確認してください。（詳細はブラウザのデベロッパーツール → コンソールを確認）';
     render();
     return;
   }
