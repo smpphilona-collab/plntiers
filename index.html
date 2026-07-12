@@ -406,8 +406,7 @@
       <option value="NA">NA</option>
       <option value="EU">EU</option>
       <option value="AS">AS</option>
-      <option value="OCE">OCE</option>
-      <option value="SA">SA</option>
+      <option value="AU">AU</option>
     </select>
   </div>
 </div>
@@ -481,74 +480,112 @@ const GAMEMODES = [
 ];
 
 const TIERS = ['HT1','LT1','HT2','LT2','HT3','LT3','HT4','LT4','HT5','LT5'];
-const TIER_POINTS = {'HT1':60,'LT1':50,'HT2':40,'LT2':32,'HT3':24,'LT3':18,'HT4':12,'LT4':8,'HT5':4,'LT5':1};
-const REGIONS = ['NA','EU','AS','OCE','SA'];
+const TIER_POINTS = {'HT1':60,'LT1':45,'HT2':30,'LT2':20,'HT3':10,'LT3':6,'HT4':4,'LT4':3,'HT5':2,'LT5':1};
+const REGIONS = ['NA','EU','AS','AU'];
 
 /* =====================================================================
-   ▼▼▼ プレイヤーデータはここを編集してください ▼▼▼
+   プレイヤーデータは Google Apps Script のランキングAPIから自動的に
+   読み込まれます。index.html を編集する必要はありません
+   （下の GAS_URL だけは、あなたのデプロイURLに書き換えてください）。
 
-   1人分は下の形です。コピーして増やしてください。
-
-   {
-     name: "プレイヤー名",   // Minecraftのユーザー名（アバターにも使われます）
-     region: "NA",           // NA / EU / AS / OCE / SA
-     gm: {
-       // 各モードのティア: "HT1","LT1","HT2","LT2","HT3","LT3","HT4","LT4","HT5","LT5"
-       //   数字が小さいほど上位。HT(High Tier)はその数字の中で上、LT(Low Tier)は下。
-       //   例: HT1 > LT1 > HT2 > LT2 > HT3 > LT3 > HT4 > LT4 > HT5 > LT5
-       // 未テスト/未ランクは null のまま。
-       vanilla: null, uhc: null, pot: null, nethop: null, smp: null,
-       sword: null, axe: null, mace: null, diamondsmp: null, cart: null,
-       bow: null, debuff: null, bed: null, speed: null, manhunt: null,
-       ogvanilla: null, trident: null, elytra: null, diamondvanilla: null,
-       creeper: null, speedvanilla: null,
-     },
-   },
-
-   総合(overall)のポイント・順位は自動計算されるので手入力不要です。
-   アバターは https://mc-heads.net/avatar/ユーザー名 から自動取得されます。
-   下の2人は記入例です。削除して実際のメンバーに置き換えてください。
+   スプレッドシートの1行目（ヘッダー）は mcid / Region / 各ゲームモード名
+   にしてください。詳しくは gas_ranking_api.gs のコメントを参照。
 ===================================================================== */
-const PLAYERS = [
-  {
-    name: "PhilonaXD",
-    region: "AS",
-    gm: {
-      vanilla: "HT1", uhc: "LT2", pot: "LT1", nethop: null, smp: "HT2",
-      sword: "HT1", axe: null, mace: null, diamondsmp: null, cart: null,
-      bow: "HT3", debuff: null, bed: null, speed: null, manhunt: null,
-      ogvanilla: null, trident: null, elytra: null, diamondvanilla: null,
-      creeper: null, speedvanilla: null,
-    },
-  },
-  {
-    name: "ExampleTester",
-    region: "NA",
-    gm: {
-      vanilla: "LT3", uhc: null, pot: "HT2", nethop: "HT3", smp: null,
-      sword: null, axe: "HT4", mace: null, diamondsmp: null, cart: null,
-      bow: null, debuff: null, bed: null, speed: null, manhunt: null,
-      ogvanilla: null, trident: null, elytra: null, diamondvanilla: null,
-      creeper: null, speedvanilla: null,
-    },
-  },
-];
-/* ▲▲▲ プレイヤーデータはここまで ▲▲▲ ===================================== */
 
-let players = PLAYERS.map((p, i) => ({
-  id: i,
-  name: p.name,
-  region: p.region,
-  avatar: `https://mc-heads.net/avatar/${encodeURIComponent(p.name)}/32`,
-  gm: p.gm,
-}));
+// ▼▼▼ ここをあなたのGASウェブアプリのURLに書き換えてください ▼▼▼
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzX48qzB3zdCqpYziMKX7gj5yh3Nlf_RdzL0xEYJQkCVtO8RJ4Rmnh0VeffmTsKJVtx/exec";
+// ▲▲▲ ここまで ▲▲▲
 
-// overallPoints is always derived automatically from gm tiers — no need to set it by hand,
-// even if you paste in a static real-data array above.
-players = players.map(p => ({
-  ...p,
-  overallPoints: Object.values(p.gm).filter(Boolean).reduce((s,t)=>s+(TIER_POINTS[t]||0),0),
-}));
+let players = [];
+
+function normalizeHeader(s){ return String(s).toLowerCase().replace(/[^a-z0-9]/g, ''); }
+
+async function loadPlayersFromSheet(){
+  console.log('[PLNTIERS] loadPlayersFromSheet: start');
+  console.log('[PLNTIERS] GAS_URL =', GAS_URL);
+
+  if(!GAS_URL || GAS_URL.indexOf('http') !== 0){
+    console.error('[PLNTIERS] GAS_URL が正しく設定されていません:', GAS_URL);
+    throw new Error('GAS_URL が設定されていません');
+  }
+
+  let res;
+  try{
+    res = await fetch(GAS_URL);
+  } catch(fetchErr){
+    // ここに来る場合は多くがCORS/ネットワークエラー（URLが間違っている可能性が高い）
+    console.error('[PLNTIERS] fetch自体が失敗しました（CORS・ネットワーク・URL不正の可能性）:', fetchErr);
+    throw fetchErr;
+  }
+
+  console.log('[PLNTIERS] fetch完了: status =', res.status, ' ok =', res.ok, ' url =', res.url);
+
+  if(!res.ok){
+    const bodyText = await res.text().catch(()=> '(本文取得失敗)');
+    console.error('[PLNTIERS] レスポンスがエラーステータス:', res.status, bodyText);
+    throw new Error('ランキングAPIの取得に失敗しました (status ' + res.status + ')');
+  }
+
+  const rawText = await res.text();
+  console.log('[PLNTIERS] レスポンス本文の先頭300文字:', rawText.slice(0, 300));
+
+  let rows;
+  try{
+    rows = JSON.parse(rawText);
+  } catch(parseErr){
+    // GASがJSONではなくHTML（ログイン画面やエラーページ）を返している場合、ここで失敗する
+    console.error('[PLNTIERS] JSONパースに失敗しました。GASがJSON以外（HTMLなど）を返している可能性があります:', parseErr);
+    throw parseErr;
+  }
+
+  if(!Array.isArray(rows)){
+    console.error('[PLNTIERS] APIの返り値が配列ではありません:', rows);
+    throw new Error('APIの返り値の形式が不正です');
+  }
+
+  console.log('[PLNTIERS] 取得した行数:', rows.length, ' サンプル1件目:', rows[0]);
+
+  const modeIdByHeader = {};
+  GAMEMODES.forEach(g => {
+    if(g.id !== 'overall') modeIdByHeader[normalizeHeader(g.label)] = g.id;
+  });
+
+  const list = rows
+    .map((row, i) => {
+      let name = null, region = null;
+      const gm = {};
+      GAMEMODES.forEach(g => { if(g.id !== 'overall') gm[g.id] = null; });
+
+      Object.keys(row).forEach(key => {
+        const norm = normalizeHeader(key);
+        if(norm === 'mcid' || norm === 'name'){ name = row[key] ? String(row[key]).trim() : null; return; }
+        if(norm === 'region'){ region = row[key] ? String(row[key]).trim().toUpperCase() : null; return; }
+        const modeId = modeIdByHeader[norm];
+        if(modeId){
+          const val = row[key];
+          gm[modeId] = (val !== null && String(val).trim() !== '') ? String(val).trim().toUpperCase() : null;
+        }
+      });
+
+      if(!name){
+        console.warn('[PLNTIERS] mcid/name が空の行をスキップしました:', row);
+        return null;
+      }
+      return {
+        id: i,
+        name,
+        region: region || '—',
+        avatar: `https://mc-heads.net/avatar/${encodeURIComponent(name)}/32`,
+        gm,
+        overallPoints: Object.values(gm).filter(Boolean).reduce((s,t)=>s+(TIER_POINTS[t]||0),0),
+      };
+    })
+    .filter(Boolean);
+
+  console.log('[PLNTIERS] 変換後のプレイヤー数:', list.length, list);
+  console.log('[PLNTIERS] loadPlayersFromSheet: 成功');
+  return list;
+}
 
 function tierClass(t){ return 'tb-' + t.toLowerCase(); }
 function tierLabel(t){ return t; }
@@ -675,7 +712,7 @@ function render(){
 }
 
 /* ---------------- PLAYER MODAL ---------------- */
-const REGION_NAMES = { NA:'North America', EU:'Europe', AS:'Asia', OCE:'Oceania', SA:'South America' };
+const REGION_NAMES = { NA:'North America', EU:'Europe', AS:'Asia', AU:'Australia' };
 
 function openPlayerModal(playerId, rankPos, modeId, points){
   const p = players.find(pl => pl.id === playerId);
@@ -694,7 +731,7 @@ function openPlayerModal(playerId, rankPos, modeId, points){
   tiersEl.innerHTML = '';
   const rankedModes = GAMEMODES.filter(g => g.id !== 'overall' && p.gm[g.id]);
   if(rankedModes.length === 0){
-    tiersEl.innerHTML = '<div class="modal-region" style="grid-column:1/-1;">まだどのモードもランクされていません</div>';
+    tiersEl.innerHTML = '<div class="modal-region" style="grid-column:1/-1;">ランクなし</div>';
   } else {
     rankedModes.forEach(g=>{
       const t = p.gm[g.id];
@@ -724,7 +761,26 @@ document.addEventListener('keydown', e=>{
   if(e.key === 'Escape') closePlayerModal();
 });
 
-render();
+/* ---------------- INIT ---------------- */
+async function init(){
+  console.log('[PLNTIERS] init: start');
+  const emptyState = document.getElementById('emptyState');
+  emptyState.style.display = 'block';
+  emptyState.textContent = 'ランキングデータを読み込み中...';
+  try{
+    players = await loadPlayersFromSheet();
+    console.log('[PLNTIERS] init: プレイヤーデータの取得に成功しました。件数 =', players.length);
+  } catch(err){
+    console.error('[PLNTIERS] init: プレイヤーデータの取得に失敗しました:', err);
+    emptyState.textContent = 'ランキングデータを読み込めませんでした。このモードのリザルトが1つも出ていません。';
+    render();
+    return;
+  }
+  console.log('[PLNTIERS] init: render() を呼び出します');
+  render();
+  console.log('[PLNTIERS] init: 完了');
+}
+init();
 </script>
 </body>
 </html>
